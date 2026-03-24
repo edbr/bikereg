@@ -31,6 +31,8 @@ type FormValues = z.infer<typeof formSchema>;
 export function RegisterBikeForm() {
   const { isConnected } = useAccount();
   const contractReady = hasUsableContractConfig() && Boolean(env.contractAddress);
+  const networkLabel =
+    env.chain === "localhost" ? "localhost" : env.chain === "base-sepolia" ? "Base Sepolia" : "Sepolia";
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -128,7 +130,7 @@ export function RegisterBikeForm() {
                 {!isConnected ? <p className="text-xs text-red-300">Wallet not connected state</p> : null}
                 {isConnected && !contractReady ? (
                   <p className="text-xs text-amber-300">
-                    Contract not configured for the active {env.chain === "localhost" ? "localhost" : "Sepolia"} network. Form is in preview mode until env vars are set.
+                    Contract not configured for the active {networkLabel} network. Form is in preview mode until env vars are set.
                   </p>
                 ) : null}
               </div>

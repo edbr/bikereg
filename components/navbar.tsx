@@ -5,6 +5,9 @@ import { WalletConnectButton } from "@/components/wallet-connect-button";
 import { env } from "@/lib/env";
 
 export function Navbar() {
+  const networkLabel =
+    env.chain === "localhost" ? "Localhost mode" : env.chain === "base-sepolia" ? "Base Sepolia" : "Sepolia ready";
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-background/80 backdrop-blur-xl">
       <div className="container-shell flex h-20 items-center justify-between">
@@ -26,7 +29,7 @@ export function Navbar() {
           </Link>
           <span className="inline-flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-primary" />
-            {env.chain === "localhost" ? "Localhost mode" : "Sepolia ready"}
+            {networkLabel}
           </span>
         </nav>
         <WalletConnectButton />

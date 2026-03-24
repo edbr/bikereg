@@ -32,10 +32,13 @@ cp .env.local.example .env.local
 
 - `.env`
   - `SEPOLIA_RPC_URL`
+  - `BASE_SEPOLIA_RPC_URL`
   - `PRIVATE_KEY`
 - `.env.local`
   - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
+  - `NEXT_PUBLIC_FRAMEPROOF_CHAIN`
   - `NEXT_PUBLIC_SEPOLIA_RPC_URL`
+  - `NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL`
   - `NEXT_PUBLIC_FRAMEPROOF_CONTRACT_ADDRESS`
 
 ## Install
@@ -82,8 +85,17 @@ npm run deploy:sepolia
 
 After deploy, update `.env.local` with the deployed Sepolia address and restart the Next.js dev server.
 
+## Deploy to Base Sepolia
+
+```bash
+npm run deploy:base-sepolia
+```
+
+Set `NEXT_PUBLIC_FRAMEPROOF_CHAIN=base-sepolia` and update `.env.local` with the deployed Base Sepolia address before deploying the frontend.
+
 ## Notes
 
 - If contract reads fail or the contract address is not configured, the UI falls back to mock bike data.
 - Transfer and registration actions require a connected wallet and a valid deployed contract address.
+- `localhost`, `sepolia`, and `base-sepolia` are supported frontend chain modes.
 - The ABI file in `abi/FrameProofRegistry.ts` mirrors the included Solidity contract for frontend integration.

@@ -1,13 +1,19 @@
 import { createPublicClient, http, isAddress } from "viem";
-import { hardhat, sepolia } from "viem/chains";
+import { baseSepolia, hardhat, sepolia } from "viem/chains";
 
 import { frameProofRegistryAbi } from "@/abi/FrameProofRegistry";
 import { env } from "@/lib/env";
 import { mockBikes } from "@/lib/mock-data";
 import { Bike, BikeFormValues } from "@/lib/types";
 
-const activeChain = env.chain === "localhost" ? hardhat : sepolia;
-const activeRpcUrl = env.chain === "localhost" ? env.localhostRpcUrl : env.sepoliaRpcUrl;
+const activeChain =
+  env.chain === "localhost" ? hardhat : env.chain === "base-sepolia" ? baseSepolia : sepolia;
+const activeRpcUrl =
+  env.chain === "localhost"
+    ? env.localhostRpcUrl
+    : env.chain === "base-sepolia"
+      ? env.baseSepoliaRpcUrl
+      : env.sepoliaRpcUrl;
 
 const publicClient = createPublicClient({
   chain: activeChain,

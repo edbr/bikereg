@@ -6,6 +6,7 @@ loadEnv();
 
 const rawPrivateKey = process.env.PRIVATE_KEY?.trim();
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL;
+const BASE_SEPOLIA_RPC_URL = process.env.BASE_SEPOLIA_RPC_URL;
 const normalizedPrivateKey =
   rawPrivateKey && rawPrivateKey.startsWith("0x") ? rawPrivateKey : rawPrivateKey ? `0x${rawPrivateKey}` : undefined;
 const hasValidPrivateKey = Boolean(normalizedPrivateKey && /^0x[a-fA-F0-9]{64}$/.test(normalizedPrivateKey));
@@ -28,6 +29,10 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: SEPOLIA_RPC_URL || "",
       // Ignore placeholder or malformed keys so local Hardhat commands still work.
+      accounts: hasValidPrivateKey && normalizedPrivateKey ? [normalizedPrivateKey] : [],
+    },
+    baseSepolia: {
+      url: BASE_SEPOLIA_RPC_URL || "",
       accounts: hasValidPrivateKey && normalizedPrivateKey ? [normalizedPrivateKey] : [],
     },
   },
