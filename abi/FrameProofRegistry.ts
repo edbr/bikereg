@@ -71,6 +71,20 @@ export const frameProofRegistryAbi = [
   },
   {
     type: "function",
+    name: "exists",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "serialNumberRegistered",
+    stateMutability: "view",
+    inputs: [{ name: "serialNumber", type: "string" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
     name: "safeTransferFrom",
     stateMutability: "nonpayable",
     inputs: [

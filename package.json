@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test:contracts": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat test",
     "compile": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat compile",
     "deploy:local": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat run scripts/deploy.ts --network localhost",
     "deploy:sepolia": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat run scripts/deploy.ts --network sepolia",

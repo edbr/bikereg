@@ -19,6 +19,7 @@ contract FrameProofRegistry is ERC721Enumerable, Ownable {
     uint256 private _nextTokenId = 1;
 
     mapping(uint256 => Bike) private _bikes;
+    mapping(bytes32 => bool) private _registeredSerials;
 
     event BikeRegistered(uint256 indexed tokenId, address indexed owner, string serialNumber);
     event BikeTransferred(uint256 indexed tokenId, address indexed from, address indexed to);
@@ -40,10 +41,12 @@ contract FrameProofRegistry is ERC721Enumerable, Ownable {
         require(year >= 1900 && year <= 9999, "Invalid year");
         require(bytes(serialNumber).length > 0, "Serial required");
         require(bytes(color).length > 0, "Color required");
+        require(!_registeredSerials[keccak256(bytes(serialNumber))], "Serial already registered");
 
         tokenId = _nextTokenId++;
 
         _safeMint(msg.sender, tokenId);
+        _registeredSerials[keccak256(bytes(serialNumber))] = true;
         _bikes[tokenId] = Bike({
             nickname: nickname,
             brand: brand,
@@ -76,6 +79,10 @@ contract FrameProofRegistry is ERC721Enumerable, Ownable {
 
     function exists(uint256 tokenId) external view returns (bool) {
         return _exists(tokenId);
+    }
+
+    function serialNumberRegistered(string calldata serialNumber) external view returns (bool) {
+        return _registeredSerials[keccak256(bytes(serialNumber))];
     }
 
     function _afterTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal override {

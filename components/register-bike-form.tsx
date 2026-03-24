@@ -5,7 +5,7 @@ import { AlertCircle, LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { z } from "zod";
 
 import { frameProofRegistryAbi } from "@/abi/FrameProofRegistry";
@@ -14,25 +14,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { env } from "@/lib/env";
+import { frameProofChain, frameProofNetworkLabel } from "@/lib/frameproof-network";
 import { getRegisterBikeArgs, hasUsableContractConfig } from "@/lib/frameproof";
 
 const formSchema = z.object({
-  nickname: z.string().min(1, "Nickname is required"),
-  brand: z.string().min(1, "Brand is required"),
-  model: z.string().min(1, "Model is required"),
+  nickname: z.string().trim().min(1, "Nickname is required"),
+  brand: z.string().trim().min(1, "Brand is required"),
+  model: z.string().trim().min(1, "Model is required"),
   year: z.coerce.number().min(1900).max(9999),
-  serialNumber: z.string().min(1, "Serial number is required"),
-  color: z.string().min(1, "Color is required"),
-  imageUri: z.string().url("Enter a valid image URL").optional().or(z.literal("")),
+  serialNumber: z.string().trim().min(1, "Serial number is required"),
+  color: z.string().trim().min(1, "Color is required"),
+  imageUri: z.string().trim().url("Enter a valid image URL").optional().or(z.literal("")),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function RegisterBikeForm() {
-  const { isConnected } = useAccount();
+export function RegisterBikeForm({ onRegistered }: { onRegistered?: () => void }) {
+  const { chainId, isConnected } = useAccount();
+  const { isPending: isSwitchingChain, switchChain } = useSwitchChain();
   const contractReady = hasUsableContractConfig() && Boolean(env.contractAddress);
-  const networkLabel =
-    env.chain === "localhost" ? "localhost" : env.chain === "base-sepolia" ? "Base Sepolia" : "Sepolia";
+  const onExpectedChain = chainId === frameProofChain.id;
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -53,8 +54,9 @@ export function RegisterBikeForm() {
     if (receipt.isSuccess) {
       toast.success("Bike registered successfully");
       form.reset();
+      onRegistered?.();
     }
-  }, [form, receipt.isSuccess]);
+  }, [form, onRegistered, receipt.isSuccess]);
 
   useEffect(() => {
     if (!error) return;
@@ -67,6 +69,11 @@ export function RegisterBikeForm() {
   function onSubmit(values: FormValues) {
     if (!isConnected) {
       toast.error("Connect your wallet first");
+      return;
+    }
+
+    if (!onExpectedChain) {
+      toast.error(`Switch your wallet to ${frameProofNetworkLabel} first`);
       return;
     }
 
@@ -123,19 +130,36 @@ export function RegisterBikeForm() {
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   {!isConnected ? <StatusBadge status="error" /> : null}
+                  {isConnected && !onExpectedChain ? <StatusBadge status="error" /> : null}
                   {isConnected && !contractReady ? <StatusBadge status="mock" /> : null}
                   {receipt.isLoading ? <StatusBadge status="pending" /> : null}
                   {receipt.isSuccess ? <StatusBadge status="success" /> : null}
                 </div>
                 {!isConnected ? <p className="text-xs text-red-300">Wallet not connected state</p> : null}
+                {isConnected && !onExpectedChain ? (
+                  <p className="text-xs text-red-300">
+                    Wallet is on the wrong network. Switch to {frameProofNetworkLabel} to register bikes.
+                  </p>
+                ) : null}
                 {isConnected && !contractReady ? (
                   <p className="text-xs text-amber-300">
-                    Contract not configured for the active {networkLabel} network. Form is in preview mode until env vars are set.
+                    Contract not configured for the active {frameProofNetworkLabel} network. Form is in preview mode until env vars are set.
                   </p>
                 ) : null}
               </div>
             </div>
-            <Button type="submit" disabled={!isConnected || !contractReady || isPending || receipt.isLoading}>
+            {!isConnected || onExpectedChain ? null : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => switchChain({ chainId: frameProofChain.id })}
+                disabled={isSwitchingChain}
+              >
+                {isSwitchingChain ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+                {isSwitchingChain ? "Switching network" : `Switch to ${frameProofNetworkLabel}`}
+              </Button>
+            )}
+            <Button type="submit" disabled={!isConnected || !onExpectedChain || !contractReady || isPending || receipt.isLoading}>
               {isPending || receipt.isLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
               {receipt.isLoading ? "Waiting for confirmation" : isPending ? "Confirm in wallet" : "Register bicycle"}
             </Button>

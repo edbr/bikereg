@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { LoaderCircle, Wallet, PlusCircle, Activity, Bike as BikeGlyph } from "lucide-react";
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { BikeGrid } from "@/components/bike-grid";
@@ -21,6 +21,7 @@ export function DashboardClient() {
   const { address, isConnected } = useAccount();
   const [bikes, setBikes] = useState<Bike[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -44,7 +45,13 @@ export function DashboardClient() {
     return () => {
       active = false;
     };
-  }, [address]);
+  }, [address, refreshKey]);
+
+  function refreshBikes() {
+    startTransition(() => {
+      setRefreshKey((current) => current + 1);
+    });
+  }
 
   return (
     <div className="container-shell space-y-12 py-12">
@@ -114,7 +121,7 @@ export function DashboardClient() {
       <section id="register">
         <SectionHeader title="Register bicycle" description="Create a new FrameProof NFT with structured metadata stored directly in the registry contract." />
         <div className="mt-6">
-          <RegisterBikeForm />
+          <RegisterBikeForm onRegistered={refreshBikes} />
         </div>
       </section>
 

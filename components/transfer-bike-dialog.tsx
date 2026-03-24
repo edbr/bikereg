@@ -4,7 +4,7 @@ import { LoaderCircle, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { isAddress } from "viem";
 import { toast } from "sonner";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 
 import { frameProofRegistryAbi } from "@/abi/FrameProofRegistry";
 import {
@@ -19,14 +19,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { env } from "@/lib/env";
 import { hasUsableContractConfig } from "@/lib/frameproof";
+import { frameProofChain, frameProofNetworkLabel } from "@/lib/frameproof-network";
 import { Bike } from "@/lib/types";
 import { StatusBadge } from "@/components/status-badge";
 
 export function TransferBikeDialog({ bike }: { bike: Bike }) {
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
+  const { isPending: isSwitchingChain, switchChain } = useSwitchChain();
   const [recipient, setRecipient] = useState("");
   const [open, setOpen] = useState(false);
   const contractReady = hasUsableContractConfig() && Boolean(env.contractAddress);
+  const onExpectedChain = chainId === frameProofChain.id;
   const { data: hash, error, isPending, writeContract } = useWriteContract();
   const receipt = useWaitForTransactionReceipt({ hash });
 
@@ -59,6 +62,11 @@ export function TransferBikeDialog({ bike }: { bike: Bike }) {
 
     if (!contractReady || !env.contractAddress) {
       toast.info("Set a deployed contract address to enable transfers");
+      return;
+    }
+
+    if (!onExpectedChain) {
+      toast.error(`Switch your wallet to ${frameProofNetworkLabel} first`);
       return;
     }
 
@@ -108,11 +116,15 @@ export function TransferBikeDialog({ bike }: { bike: Bike }) {
           <div className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="flex flex-wrap items-center gap-2">
               {!address ? <StatusBadge status="error" /> : null}
+              {address && !onExpectedChain ? <StatusBadge status="error" /> : null}
               {!contractReady ? <StatusBadge status="mock" /> : null}
               {receipt.isLoading ? <StatusBadge status="pending" /> : null}
               {receipt.isSuccess ? <StatusBadge status="success" /> : null}
             </div>
             {!address ? <p className="text-sm text-red-300">Connect your wallet to transfer ownership.</p> : null}
+            {address && !onExpectedChain ? (
+              <p className="text-sm text-red-300">Switch to {frameProofNetworkLabel} to transfer this bike.</p>
+            ) : null}
             {!address && invalidAddress ? null : invalidAddress ? (
               <p className="text-sm text-red-300">Enter a valid recipient wallet address.</p>
             ) : null}
@@ -121,9 +133,15 @@ export function TransferBikeDialog({ bike }: { bike: Bike }) {
               <p className="text-sm text-amber-300">Contract address missing. Transfers stay disabled until the env is configured.</p>
             ) : null}
           </div>
+          {!address || onExpectedChain ? null : (
+            <Button type="button" variant="outline" onClick={() => switchChain({ chainId: frameProofChain.id })} disabled={isSwitchingChain}>
+              {isSwitchingChain ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+              {isSwitchingChain ? "Switching network" : `Switch to ${frameProofNetworkLabel}`}
+            </Button>
+          )}
           <Button
             onClick={onTransfer}
-            disabled={!address || !contractReady || isPending || receipt.isLoading || invalidAddress || transferToSelf}
+            disabled={!address || !onExpectedChain || !contractReady || isPending || receipt.isLoading || invalidAddress || transferToSelf}
           >
             {isPending || receipt.isLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
             {receipt.isLoading ? "Transfer pending" : isPending ? "Confirm in wallet" : "Confirm transfer"}

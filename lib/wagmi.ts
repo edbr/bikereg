@@ -2,25 +2,15 @@
 
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { http } from "wagmi";
-import { baseSepolia, hardhat, sepolia } from "wagmi/chains";
 
-import { env } from "@/lib/env";
-
-const activeChain =
-  env.chain === "localhost" ? hardhat : env.chain === "base-sepolia" ? baseSepolia : sepolia;
-const activeRpcUrl =
-  env.chain === "localhost"
-    ? env.localhostRpcUrl
-    : env.chain === "base-sepolia"
-      ? env.baseSepoliaRpcUrl
-      : env.sepoliaRpcUrl;
+import { frameProofChain, frameProofRpcUrl } from "@/lib/frameproof-network";
 
 export const wagmiConfig = getDefaultConfig({
   appName: "FrameProof",
-  projectId: env.walletConnectProjectId,
-  chains: [activeChain],
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "demo-walletconnect-project-id",
+  chains: [frameProofChain],
   transports: {
-    [activeChain.id]: http(activeRpcUrl),
+    [frameProofChain.id]: http(frameProofRpcUrl),
   },
   ssr: true,
 });
