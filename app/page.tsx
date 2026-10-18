@@ -1,3 +1,7 @@
+import { pageMetadata, site } from "@/lib/site";
+
+export const metadata = pageMetadata("/", site.title, site.description);
+
 import Link from "next/link";
 import { ArrowRight, Fingerprint, Wallet, ShieldCheck } from "lucide-react";
 
